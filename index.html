@@ -186,19 +186,25 @@
     const image = document.getElementById('model-image');
     const qrWrapper = document.getElementById('qr-wrapper');
     const qrClose = document.getElementById('qr-close');
+    const qrIosImg = document.getElementById('qr-ios');
+    const qrAndroidImg = document.getElementById('qr-android');
 
     const models = [
       {
         name: "Bed",
         image: "https://raw.githubusercontent.com/soumbhat/somemodels/main/bed.png",
         glb: "https://raw.githubusercontent.com/soumbhat/somemodels/main/bed.glb",
-        usdz: "https://huggingface.co/datasets/soumbhat/Demo_furniture/resolve/main/bed.usdz"
+        usdz: "https://huggingface.co/datasets/soumbhat/Demo_furniture/resolve/main/bed.usdz",
+        qr_ios: "https://github.com/soumbhat/somemodels/blob/main/qrcode_bed_ios.png?raw=true",
+        qr_android: "https://github.com/soumbhat/somemodels/blob/main/qrcode_bed_android.png?raw=true"
       },
       {
         name: "Sofa",
         image: "https://raw.githubusercontent.com/soumbhat/somemodels/main/untitled-shoot-sofa.jpg",
         glb: "https://raw.githubusercontent.com/soumbhat/somemodels/main/texture_mesh_c59b717cae6ac53f_shaded.glb",
-        usdz: "https://huggingface.co/datasets/soumbhat/Demo_furniture/resolve/main/texture_mesh_c59b717cae6ac53f_shaded%20(1).usdz"
+        usdz: "https://huggingface.co/datasets/soumbhat/Demo_furniture/resolve/main/texture_mesh_c59b717cae6ac53f_shaded%20(1).usdz",
+        qr_ios: "https://github.com/soumbhat/somemodels/blob/main/qrcode_sofa_ios.png?raw=true",
+        qr_android: "https://github.com/soumbhat/somemodels/blob/main/qrcode_sofa_android.png?raw=true"
       }
     ];
 
@@ -210,10 +216,8 @@
 
     function updateQRCodes() {
       const model = models[currentIndex];
-      const iosURL = model.usdz;
-      const androidURL = `https://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(model.glb)}&mode=ar_preferred`;
-      document.getElementById('qr-ios').src = `https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl=${encodeURIComponent(iosURL)}`;
-      document.getElementById('qr-android').src = `https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl=${encodeURIComponent(androidURL)}`;
+      qrIosImg.src = model.qr_ios;
+      qrAndroidImg.src = model.qr_android;
     }
 
     nextBtn.addEventListener('click', () => {
@@ -232,16 +236,20 @@
         // For iOS, redirect directly to USDZ
         window.location.href = model.usdz;
       } else if (!isMobile) {
-        // On desktop, show QR code modal popup
+        // On desktop, show QR code modal popup with static images
         updateQRCodes();
         qrWrapper.style.display = 'flex';
       } else {
-        // On Android mobile, redirect to Scene Viewer intent URL
+        // On Android mobile, use intent URL
         const encoded = encodeURIComponent(model.glb);
         const intentUrl = `intent://arvr.google.com/scene-viewer/1.0?file=${encoded}&mode=ar_preferred#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;S.browser_fallback_url=https%3A%2F%2Fmodelviewer.dev%2F;end;`;
         window.location.href = intentUrl;
       }
     });
+
+    // Initialize first image and QR codes for desktop view
+    updateImage();
+    if (!isMobile) updateQRCodes();
   </script>
 
 </body>
