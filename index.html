@@ -72,47 +72,80 @@
       box-shadow: 0 8px 20px rgba(21, 90, 182, 0.6);
     }
 
+    /* Modal overlay styles */
     #qr-wrapper {
       display: none;
-      width: 100%;
-      position: relative;
-      margin-top: 2rem;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
       justify-content: center;
+      align-items: center;
+      animation: fadeIn 0.3s ease forwards;
     }
+
     #qr-container {
+      background: #fff;
+      padding: 1.5rem 2rem;
+      border-radius: 12px;
+      max-width: 33vw;
+      min-width: 280px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+      position: relative;
       display: flex;
       justify-content: space-around;
-      width: 33%;
-      max-width: 500px;
-      padding: 1rem;
-      background: #fff;
-      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-      border-radius: 12px;
-      position: relative;
+      align-items: center;
+      gap: 1.5rem;
     }
-    #qr-container p { margin-bottom: 0.5rem; font-weight: 600; }
-    #qr-container img { width: 140px; height: 140px; }
+
+    #qr-container p {
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: #222;
+    }
+
+    #qr-container img {
+      width: 140px;
+      height: 140px;
+      object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
     #qr-close {
       position: absolute;
       top: 8px;
       right: 8px;
       background: transparent;
       border: none;
-      font-size: 1.2rem;
+      font-size: 1.6rem;
       cursor: pointer;
       color: #888;
+      transition: color 0.2s ease;
     }
-    #qr-close:hover { color: #333; }
+    #qr-close:hover {
+      color: #444;
+    }
+
+    @keyframes fadeIn {
+      from {opacity: 0;}
+      to {opacity: 1;}
+    }
 
     @media (max-width: 480px) {
       h1 { font-size: 2rem; }
       .next-button { width: 38px; height: 38px; font-size: 1.2rem; }
       button#ar-button { width: 100%; font-size: 1.1rem; padding: 1rem; }
+
       #qr-container {
         flex-direction: column;
-        width: 90%;
+        width: 90vw;
       }
-      #qr-container div { margin-bottom: 1rem; }
+      #qr-container img {
+        width: 120px;
+        height: 120px;
+      }
     }
   </style>
 </head>
@@ -130,17 +163,17 @@
 
   <button id="ar-button">View in AR</button>
 
-  <!-- QR Code display for desktop -->
-  <div id="qr-wrapper">
+  <!-- QR Code modal popup -->
+  <div id="qr-wrapper" role="dialog" aria-modal="true" aria-labelledby="qr-title">
     <div id="qr-container">
-      <button id="qr-close">&times;</button>
+      <button id="qr-close" aria-label="Close QR code popup">&times;</button>
       <div style="text-align: center;">
-        <p>iPhone (iOS)</p>
-        <img id="qr-ios" alt="QR Code iOS" />
+        <p id="qr-title">iPhone (iOS)</p>
+        <img id="qr-ios" alt="QR Code for iOS model download" />
       </div>
       <div style="text-align: center;">
         <p>Android</p>
-        <img id="qr-android" alt="QR Code Android" />
+        <img id="qr-android" alt="QR Code for Android model download" />
       </div>
     </div>
   </div>
@@ -196,13 +229,14 @@
     arButton.addEventListener('click', () => {
       const model = models[currentIndex];
       if (isIOS) {
+        // For iOS, redirect directly to USDZ
         window.location.href = model.usdz;
       } else if (!isMobile) {
-        // Show QR popup on desktop instead of redirecting
+        // On desktop, show QR code modal popup
         updateQRCodes();
         qrWrapper.style.display = 'flex';
       } else {
-        // Android mobile
+        // On Android mobile, redirect to Scene Viewer intent URL
         const encoded = encodeURIComponent(model.glb);
         const intentUrl = `intent://arvr.google.com/scene-viewer/1.0?file=${encoded}&mode=ar_preferred#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;S.browser_fallback_url=https%3A%2F%2Fmodelviewer.dev%2F;end;`;
         window.location.href = intentUrl;
