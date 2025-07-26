@@ -21,27 +21,14 @@
       box-sizing: border-box;
       text-align: center;
     }
-
-    h1 {
-      font-weight: 700;
-      font-size: 2.5rem;
-      margin-bottom: 0.2rem;
-      color: #1a73e8;
-    }
-
-    p.description {
-      font-size: 1.1rem;
-      margin: 0 0 2rem 0;
-      max-width: 600px;
-      color: #555;
-    }
+    h1 { font-weight: 700; font-size: 2.5rem; margin-bottom: 0.2rem; color: #1a73e8; }
+    p.description { font-size: 1.1rem; margin: 0 0 2rem 0; max-width: 600px; color: #555; }
 
     .image-wrapper {
       position: relative;
       max-width: 90vw;
       margin-bottom: 2rem;
     }
-
     .preview-image {
       width: 90vw;
       max-height: 350px;
@@ -49,7 +36,6 @@
       box-shadow: 0 4px 15px rgba(26, 115, 232, 0.2);
       object-fit: contain;
     }
-
     .next-button {
       position: absolute;
       right: 10px;
@@ -66,12 +52,10 @@
       box-shadow: 0 6px 12px rgba(26, 115, 232, 0.4);
       transition: background-color 0.3s ease, box-shadow 0.3s ease;
     }
-
     .next-button:hover {
       background-color: #155ab6;
       box-shadow: 0 8px 20px rgba(21, 90, 182, 0.6);
     }
-
     button#ar-button {
       background-color: #1a73e8;
       border: none;
@@ -83,28 +67,52 @@
       box-shadow: 0 6px 12px rgba(26, 115, 232, 0.4);
       transition: background-color 0.3s ease, box-shadow 0.3s ease;
     }
-
     button#ar-button:hover {
       background-color: #155ab6;
       box-shadow: 0 8px 20px rgba(21, 90, 182, 0.6);
     }
 
+    #qr-wrapper {
+      display: none;
+      width: 100%;
+      position: relative;
+      margin-top: 2rem;
+      justify-content: center;
+    }
+    #qr-container {
+      display: flex;
+      justify-content: space-around;
+      width: 33%;
+      max-width: 500px;
+      padding: 1rem;
+      background: #fff;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+      border-radius: 12px;
+      position: relative;
+    }
+    #qr-container p { margin-bottom: 0.5rem; font-weight: 600; }
+    #qr-container img { width: 140px; height: 140px; }
+    #qr-close {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: transparent;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+      color: #888;
+    }
+    #qr-close:hover { color: #333; }
+
     @media (max-width: 480px) {
-      h1 {
-        font-size: 2rem;
+      h1 { font-size: 2rem; }
+      .next-button { width: 38px; height: 38px; font-size: 1.2rem; }
+      button#ar-button { width: 100%; font-size: 1.1rem; padding: 1rem; }
+      #qr-container {
+        flex-direction: column;
+        width: 90%;
       }
-
-      .next-button {
-        width: 38px;
-        height: 38px;
-        font-size: 1.2rem;
-      }
-
-      button#ar-button {
-        width: 100%;
-        font-size: 1.1rem;
-        padding: 1rem;
-      }
+      #qr-container div { margin-bottom: 1rem; }
     }
   </style>
 </head>
@@ -115,32 +123,49 @@
     Explore realistic 3D models of our latest furniture designs. Tap the button below to switch models and view in augmented reality.
   </p>
 
-  <!-- Image with next button -->
   <div class="image-wrapper">
-    <img id="model-image" src="https://raw.githubusercontent.com/soumbhat/somemodels/main/sofa-shoot.jpg" alt="Furniture Preview" class="preview-image" />
+    <img id="model-image" src="https://raw.githubusercontent.com/soumbhat/somemodels/main/bed.png" alt="Furniture Preview" class="preview-image" />
     <button class="next-button" id="next-btn">&#9654;</button>
   </div>
 
   <button id="ar-button">View in AR</button>
 
+  <!-- QR Code display for desktop -->
+  <div id="qr-wrapper">
+    <div id="qr-container">
+      <button id="qr-close">&times;</button>
+      <div style="text-align: center;">
+        <p>iPhone (iOS)</p>
+        <img id="qr-ios" alt="QR Code iOS" />
+      </div>
+      <div style="text-align: center;">
+        <p>Android</p>
+        <img id="qr-android" alt="QR Code Android" />
+      </div>
+    </div>
+  </div>
+
   <script>
     const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     const arButton = document.getElementById('ar-button');
     const nextBtn = document.getElementById('next-btn');
     const image = document.getElementById('model-image');
+    const qrWrapper = document.getElementById('qr-wrapper');
+    const qrClose = document.getElementById('qr-close');
 
     const models = [
-      {
-        name: "Sofa",
-        image: "https://raw.githubusercontent.com/soumbhat/somemodels/main/sofa-shoot.jpg",
-        glb: "https://raw.githubusercontent.com/soumbhat/somemodels/main/texture_mesh_c59b717cae6ac53f_shaded.glb",
-        usdz: "https://huggingface.co/datasets/soumbhat/Demo_furniture/resolve/main/texture_mesh_c59b717cae6ac53f_shaded%20(1).usdz"
-      },
       {
         name: "Bed",
         image: "https://raw.githubusercontent.com/soumbhat/somemodels/main/bed.png",
         glb: "https://raw.githubusercontent.com/soumbhat/somemodels/main/bed.glb",
         usdz: "https://huggingface.co/datasets/soumbhat/Demo_furniture/resolve/main/bed.usdz"
+      },
+      {
+        name: "Sofa",
+        image: "https://raw.githubusercontent.com/soumbhat/somemodels/main/untitled-shoot-sofa.jpg",
+        glb: "https://raw.githubusercontent.com/soumbhat/somemodels/main/texture_mesh_c59b717cae6ac53f_shaded.glb",
+        usdz: "https://huggingface.co/datasets/soumbhat/Demo_furniture/resolve/main/texture_mesh_c59b717cae6ac53f_shaded%20(1).usdz"
       }
     ];
 
@@ -150,16 +175,34 @@
       image.src = models[currentIndex].image;
     }
 
+    function updateQRCodes() {
+      const model = models[currentIndex];
+      const iosURL = model.usdz;
+      const androidURL = `https://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(model.glb)}&mode=ar_preferred`;
+      document.getElementById('qr-ios').src = `https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl=${encodeURIComponent(iosURL)}`;
+      document.getElementById('qr-android').src = `https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl=${encodeURIComponent(androidURL)}`;
+    }
+
     nextBtn.addEventListener('click', () => {
       currentIndex = (currentIndex + 1) % models.length;
       updateImage();
+      if (!isMobile) updateQRCodes();
+    });
+
+    qrClose.addEventListener('click', () => {
+      qrWrapper.style.display = 'none';
     });
 
     arButton.addEventListener('click', () => {
       const model = models[currentIndex];
       if (isIOS) {
         window.location.href = model.usdz;
+      } else if (!isMobile) {
+        // Show QR popup on desktop instead of redirecting
+        updateQRCodes();
+        qrWrapper.style.display = 'flex';
       } else {
+        // Android mobile
         const encoded = encodeURIComponent(model.glb);
         const intentUrl = `intent://arvr.google.com/scene-viewer/1.0?file=${encoded}&mode=ar_preferred#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;S.browser_fallback_url=https%3A%2F%2Fmodelviewer.dev%2F;end;`;
         window.location.href = intentUrl;
