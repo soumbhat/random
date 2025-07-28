@@ -2,179 +2,83 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Furnitur 3D Viewer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AR Furnitureee Viewer</title>
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
   <style>
-    body {
-      font-family: sans-serif;
-      margin: 0;
-      padding: 0;
-      text-align: center;
-      background: #f7f7f7;
-    }
-    img {
-      max-width: 100%;
-      height: auto;
-    }
-    #model-image {
-      max-width: 500px;
-      margin: 20px auto;
-      display: block;
-      border-radius: 16px;
-      box-shadow: 0 0 12px rgba(0,0,0,0.2);
-    }
-    button {
-      padding: 10px 20px;
-      margin: 10px;
-      font-size: 16px;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      background-color: #333;
-      color: #fff;
-    }
-    #qr-wrapper {
+    #qrcode, model-viewer {
       display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.8);
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
-      flex-direction: column;
-      gap: 20px;
-    }
-    #qr-wrapper img {
-      width: 200px;
-      height: 200px;
-    }
-    #qr-close {
-      position: absolute;
-      top: 10px;
-      right: 20px;
-      font-size: 24px;
-      cursor: pointer;
-      color: white;
+      margin-top: 20px;
     }
   </style>
 </head>
 <body>
+  <h1>View Your Furniture</h1>
+  <select id="modelSelect">
+    <option value="bed">Bed (AR)</option>
+    <option value="sofa">Sofa (Static)</option>
+  </select>
 
-  <h2>Demo: Furniture in Your Room</h2>
-  <img id="model-image" src="" alt="Furniture" />
-  <div>
-    <button id="next-btn">Next</button>
-    <button id="ar-button">View in AR</button>
-  </div>
-
-  <div id="qr-wrapper">
-    <div id="qr-close">✖</div>
-    <img id="qr-ios" alt="QR iOS" />
-    <img id="qr-android" alt="QR Android" />
-  </div>
+  <div id="qrcode"></div>
+  <model-viewer id="viewer" camera-controls auto-rotate ar ar-modes="webxr scene-viewer quick-look" style="width: 100%; height: 500px;"></model-viewer>
 
   <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-
     const SUPABASE_URL = 'https://pknidxbkalbstzfquvsv.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrbmlkeGJrYWxic3R6ZnF1dnN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3Mjk0MjAsImV4cCI6MjA2OTMwNTQyMH0.Tz8XJMd7FG4UAPc4Twy3ndeTAWiulyRL95zaxS8sPOA';
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const modelViewer = document.getElementById('viewer');
+    const qrcodeContainer = document.getElementById('qrcode');
+    const select = document.getElementById('modelSelect');
 
-    const arButton = document.getElementById('ar-button');
-    const nextBtn = document.getElementById('next-btn');
-    const image = document.getElementById('model-image');
-    const qrWrapper = document.getElementById('qr-wrapper');
-    const qrClose = document.getElementById('qr-close');
-    const qrIosImg = document.getElementById('qr-ios');
-    const qrAndroidImg = document.getElementById('qr-android');
+    async function getSignedURL(filename) {
+      const res = await fetch(`${SUPABASE_URL}/storage/v1/object/sign/ar-models-furniture/${filename}?expiresIn=3600`, {
+        method: 'POST',
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
-    const models = [
-      {
-        name: "Bed",
-        image: "https://raw.githubusercontent.com/soumbhat/somemodels/main/bed.png",
-        glb: "bed.glb", // Only filename — signed URL will be fetched
-        usdz: "https://huggingface.co/datasets/soumbhat/Demo_furniture/resolve/main/bed.usdz",
-      },
-      {
-        name: "Sofa",
-        image: "https://raw.githubusercontent.com/soumbhat/somemodels/main/untitled-shoot-sofa.jpg",
-        glb: "https://raw.githubusercontent.com/soumbhat/somemodels/main/texture_mesh_c59b717cae6ac53f_shaded.glb",
-        usdz: "https://huggingface.co/datasets/soumbhat/Demo_furniture/resolve/main/texture_mesh_c59b717cae6ac53f_shaded%20(1).usdz",
-      }
-    ];
-
-    let currentIndex = 0;
-
-    function updateImage() {
-      image.src = models[currentIndex].image;
+      if (!res.ok) throw new Error('Failed to get signed URL');
+      const { signedURL } = await res.json();
+      return `${SUPABASE_URL}${signedURL}`;
     }
 
-    async function generateSignedURL(fileName) {
-      const { data, error } = await supabase
-        .storage
-        .from('ar-models-furniture')
-        .createSignedUrl(fileName, 60); // valid for 60s
-      if (error) {
-        console.error("Signed URL error:", error.message);
-        return null;
-      }
-      return data.signedUrl;
+    function isMobile() {
+      return /Android|iPhone|iPad/i.test(navigator.userAgent);
     }
 
-    async function updateQRWithSignedBedURL() {
-      const signedUrl = await generateSignedURL('bed.glb');
-      if (!signedUrl) return;
-      const qrApi = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(signedUrl)}`;
-      qrIosImg.src = qrApi;
-      qrAndroidImg.src = qrApi;
-    }
+    async function displayModel(model) {
+      qrcodeContainer.style.display = 'none';
+      modelViewer.style.display = 'none';
 
-    nextBtn.addEventListener('click', () => {
-      currentIndex = (currentIndex + 1) % models.length;
-      updateImage();
-    });
+      if (model === 'bed') {
+        const signedUrl = await getSignedURL('bed.glb');
+        const arViewerUrl = `https://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(signedUrl)}&mode=ar_preferred`;
 
-    qrClose.addEventListener('click', () => {
-      qrWrapper.style.display = 'none';
-    });
-
-    arButton.addEventListener('click', async () => {
-      const model = models[currentIndex];
-      if (model.name === "Bed") {
-        const signedUrl = await generateSignedURL('bed.glb');
-        if (!signedUrl) return;
-
-        if (isIOS) {
-          window.location.href = model.usdz;
-        } else if (!isMobile) {
-          await updateQRWithSignedBedURL();
-          qrWrapper.style.display = 'flex';
+        if (isMobile()) {
+          window.location.href = arViewerUrl;
         } else {
-          const intentUrl = `intent://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(signedUrl)}&mode=ar_preferred#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;S.browser_fallback_url=https%3A%2F%2Fmodelviewer.dev%2F;end;`;
-          window.location.href = intentUrl;
+          qrcodeContainer.style.display = 'block';
+          QRCode.toCanvas(qrcodeContainer, arViewerUrl);
         }
-
-      } else {
-        if (isIOS) {
-          window.location.href = model.usdz;
-        } else if (!isMobile) {
-          qrIosImg.src = "https://github.com/soumbhat/somemodels/blob/main/qrcode_sofa_ios.png?raw=true";
-          qrAndroidImg.src = "https://github.com/soumbhat/somemodels/blob/main/qrcode_sofa_android.png?raw=true";
-          qrWrapper.style.display = 'flex';
-        } else {
-          const intentUrl = `intent://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(model.glb)}&mode=ar_preferred#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;S.browser_fallback_url=https%3A%2F%2Fmodelviewer.dev%2F;end;`;
-          window.location.href = intentUrl;
-        }
+      } else if (model === 'sofa') {
+        // Replace with your actual hardcoded GLB URL for sofa
+        const sofaURL = 'https://your-public-link/sofa.glb';
+        modelViewer.src = sofaURL;
+        modelViewer.style.display = 'block';
       }
+    }
+
+    select.addEventListener('change', (e) => {
+      displayModel(e.target.value);
     });
 
-    // Initial load
-    updateImage();
+    // Load default selection
+    displayModel(select.value);
   </script>
 
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
 </body>
 </html>
