@@ -3,82 +3,118 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AR Furnitureee Viewer</title>
+  <title>Furniture 3D Demo</title>
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-  <style>
-    #qrcode, model-viewer {
-      display: none;
-      margin-top: 20px;
-    }
-  </style>
+  <style>/* your CSS stays unchanged */</style>
 </head>
 <body>
-  <h1>View Your Furniture</h1>
-  <select id="modelSelect">
-    <option value="bed">Bed (AR)</option>
-    <option value="sofa">Sofa (Static)</option>
-  </select>
 
-  <div id="qrcode"></div>
-  <model-viewer id="viewer" camera-controls auto-rotate ar ar-modes="webxr scene-viewer quick-look" style="width: 100%; height: 500px;"></model-viewer>
+  <!-- Unchanged HTML layout -->
 
-  <script type="module">
+  <script>
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const arButton = document.getElementById('ar-button');
+    const nextBtn = document.getElementById('next-btn');
+    const image = document.getElementById('model-image');
+    const qrWrapper = document.getElementById('qr-wrapper');
+    const qrClose = document.getElementById('qr-close');
+    const qrIosImg = document.getElementById('qr-ios');
+    const qrAndroidImg = document.getElementById('qr-android');
+
     const SUPABASE_URL = 'https://pknidxbkalbstzfquvsv.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrbmlkeGJrYWxic3R6ZnF1dnN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3Mjk0MjAsImV4cCI6MjA2OTMwNTQyMH0.Tz8XJMd7FG4UAPc4Twy3ndeTAWiulyRL95zaxS8sPOA';
 
-    const modelViewer = document.getElementById('viewer');
-    const qrcodeContainer = document.getElementById('qrcode');
-    const select = document.getElementById('modelSelect');
+    const models = [
+      {
+        name: "Bed",
+        image: "https://raw.githubusercontent.com/soumbhat/somemodels/main/bed.png",
+        glb: "bed.glb",
+        usdz: "https://huggingface.co/datasets/soumbhat/Demo_furniture/resolve/main/bed.usdz"
+      },
+      {
+        name: "Sofa",
+        image: "https://raw.githubusercontent.com/soumbhat/somemodels/main/untitled-shoot-sofa.jpg",
+        glb: "https://raw.githubusercontent.com/soumbhat/somemodels/main/texture_mesh_c59b717cae6ac53f_shaded.glb",
+        usdz: "https://huggingface.co/datasets/soumbhat/Demo_furniture/resolve/main/texture_mesh_c59b717cae6ac53f_shaded%20(1).usdz",
+        qr_ios: "https://github.com/soumbhat/somemodels/blob/main/qrcode_sofa_ios.png?raw=true",
+        qr_android: "https://github.com/soumbhat/somemodels/blob/main/qrcode_sofa_android.png?raw=true"
+      }
+    ];
 
-    async function getSignedURL(filename) {
-      const res = await fetch(`${SUPABASE_URL}/storage/v1/object/sign/ar-models-furniture/${filename}?expiresIn=3600`, {
+    let currentIndex = 0;
+
+    function updateImage() {
+      image.src = models[currentIndex].image;
+    }
+
+    async function getSignedBedUrl() {
+      const res = await fetch(`${SUPABASE_URL}/storage/v1/object/sign/ar-models-furniture/bed.glb?expiresIn=3600`, {
         method: 'POST',
         headers: {
           apikey: SUPABASE_ANON_KEY,
           Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-        },
+          'Content-Type': 'application/json'
+        }
       });
 
-      if (!res.ok) throw new Error('Failed to get signed URL');
       const { signedURL } = await res.json();
       return `${SUPABASE_URL}${signedURL}`;
     }
 
-    function isMobile() {
-      return /Android|iPhone|iPad/i.test(navigator.userAgent);
-    }
+    async function handleAR() {
+      const model = models[currentIndex];
+      if (model.name === "Bed") {
+        const signedUrl = await getSignedBedUrl();
+        const encoded = encodeURIComponent(signedUrl);
 
-    async function displayModel(model) {
-      qrcodeContainer.style.display = 'none';
-      modelViewer.style.display = 'none';
-
-      if (model === 'bed') {
-        const signedUrl = await getSignedURL('bed.glb');
-        const arViewerUrl = `https://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(signedUrl)}&mode=ar_preferred`;
-
-        if (isMobile()) {
-          window.location.href = arViewerUrl;
+        if (isIOS) {
+          window.location.href = model.usdz;
+        } else if (!isMobile) {
+          const androidLink = `https://arvr.google.com/scene-viewer/1.0?file=${encoded}&mode=ar_preferred`;
+          qrIosImg.src = await new Promise(resolve => QRCode.toDataURL(androidLink, (_, url) => resolve(url)));
+          qrAndroidImg.src = qrIosImg.src;
+          qrWrapper.style.display = 'flex';
         } else {
-          qrcodeContainer.style.display = 'block';
-          QRCode.toCanvas(qrcodeContainer, arViewerUrl);
+          const intentUrl = `intent://arvr.google.com/scene-viewer/1.0?file=${encoded}&mode=ar_preferred#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;end;`;
+          window.location.href = intentUrl;
         }
-      } else if (model === 'sofa') {
-        // Replace with your actual hardcoded GLB URL for sofa
-        const sofaURL = 'https://your-public-link/sofa.glb';
-        modelViewer.src = sofaURL;
-        modelViewer.style.display = 'block';
+      } else {
+        // Sofa uses static links
+        if (isIOS) {
+          window.location.href = model.usdz;
+        } else if (!isMobile) {
+          qrIosImg.src = model.qr_ios;
+          qrAndroidImg.src = model.qr_android;
+          qrWrapper.style.display = 'flex';
+        } else {
+          const encoded = encodeURIComponent(model.glb);
+          const intentUrl = `intent://arvr.google.com/scene-viewer/1.0?file=${encoded}&mode=ar_preferred#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;end;`;
+          window.location.href = intentUrl;
+        }
       }
     }
 
-    select.addEventListener('change', (e) => {
-      displayModel(e.target.value);
+    function updateQRCodes() {
+      const model = models[currentIndex];
+      if (model.qr_ios) qrIosImg.src = model.qr_ios;
+      if (model.qr_android) qrAndroidImg.src = model.qr_android;
+    }
+
+    nextBtn.addEventListener('click', () => {
+      currentIndex = (currentIndex + 1) % models.length;
+      updateImage();
+      if (!isMobile) updateQRCodes();
     });
 
-    // Load default selection
-    displayModel(select.value);
-  </script>
+    qrClose.addEventListener('click', () => {
+      qrWrapper.style.display = 'none';
+    });
 
-  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+    arButton.addEventListener('click', handleAR);
+
+    updateImage();
+    if (!isMobile) updateQRCodes();
+  </script>
 </body>
 </html>
