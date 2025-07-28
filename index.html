@@ -2,16 +2,190 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Furniture 3D Demo</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+    /* your original CSS here... */
+    body {
+      margin: 0;
+      font-family: 'Montserrat', sans-serif;
+      background: #f5f7fa;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      box-sizing: border-box;
+      text-align: center;
+    }
+    h1 { font-weight: 700; font-size: 2.5rem; margin-bottom: 0.2rem; color: #1a73e8; }
+    p.description { font-size: 1.1rem; margin: 0 0 2rem 0; max-width: 600px; color: #555; }
+
+    .image-wrapper {
+      position: relative;
+      max-width: 90vw;
+      margin-bottom: 2rem;
+    }
+    .preview-image {
+      width: 90vw;
+      max-height: 350px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(26, 115, 232, 0.2);
+      object-fit: contain;
+    }
+    .next-button {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background-color: #1a73e8;
+      border: none;
+      border-radius: 50%;
+      width: 45px;
+      height: 45px;
+      font-size: 1.5rem;
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 6px 12px rgba(26, 115, 232, 0.4);
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .next-button:hover {
+      background-color: #155ab6;
+      box-shadow: 0 8px 20px rgba(21, 90, 182, 0.6);
+    }
+    button#ar-button {
+      background-color: #1a73e8;
+      border: none;
+      border-radius: 8px;
+      padding: 1rem 2.5rem;
+      font-size: 1.25rem;
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 6px 12px rgba(26, 115, 232, 0.4);
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    button#ar-button:hover {
+      background-color: #155ab6;
+      box-shadow: 0 8px 20px rgba(21, 90, 182, 0.6);
+    }
+
+    /* Modal overlay styles */
+    #qr-wrapper {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      animation: fadeIn 0.3s ease forwards;
+    }
+
+    #qr-container {
+      background: #fff;
+      padding: 1.5rem 2rem;
+      border-radius: 12px;
+      max-width: 33vw;
+      min-width: 280px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+      position: relative;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    #qr-container p {
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: #222;
+    }
+
+    #qr-container img {
+      width: 140px;
+      height: 140px;
+      object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    #qr-close {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: transparent;
+      border: none;
+      font-size: 1.6rem;
+      cursor: pointer;
+      color: #888;
+      transition: color 0.2s ease;
+    }
+    #qr-close:hover {
+      color: #444;
+    }
+
+    @keyframes fadeIn {
+      from {opacity: 0;}
+      to {opacity: 1;}
+    }
+
+    @media (max-width: 480px) {
+      h1 { font-size: 2rem; }
+      .next-button { width: 38px; height: 38px; font-size: 1.2rem; }
+      button#ar-button { width: 100%; font-size: 1.1rem; padding: 1rem; }
+
+      #qr-container {
+        flex-direction: column;
+        width: 90vw;
+      }
+      #qr-container img {
+        width: 120px;
+        height: 120px;
+      }
+    }
+  </style>
+
+  <!-- QR code library -->
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-  <style>/* your CSS stays unchanged */</style>
 </head>
 <body>
 
-  <!-- Unchanged HTML layout -->
+  <h1>Furniture 3D Demo</h1>
+  <p class="description">
+    Explore realistic 3D models of our latest furniture designs. Tap the button below to switch models and view in augmented reality.
+  </p>
 
-  <script>
+  <div class="image-wrapper">
+    <img id="model-image" src="https://raw.githubusercontent.com/soumbhat/somemodels/main/bed.png" alt="Furniture Preview" class="preview-image" />
+    <button class="next-button" id="next-btn">&#9654;</button>
+  </div>
+
+  <button id="ar-button">View in AR</button>
+
+  <!-- QR Code modal popup -->
+  <div id="qr-wrapper" role="dialog" aria-modal="true" aria-labelledby="qr-title">
+    <div id="qr-container">
+      <button id="qr-close" aria-label="Close QR code popup">&times;</button>
+      <div style="text-align: center;">
+        <p id="qr-title">Scan this QR code to open in Google AR Viewer</p>
+        <img id="qr-code" alt="QR Code" />
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    // Your Supabase project info
+    const SUPABASE_URL = 'https://pknidxbkalbstzfquvsv.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrbmlkeGJrYWxic3R6ZnF1dnN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3Mjk0MjAsImV4cCI6MjA2OTMwNTQyMH0.Tz8XJMd7FG4UAPc4Twy3ndeTAWiulyRL95zaxS8sPOA';
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
     const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
     const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     const arButton = document.getElementById('ar-button');
@@ -19,18 +193,18 @@
     const image = document.getElementById('model-image');
     const qrWrapper = document.getElementById('qr-wrapper');
     const qrClose = document.getElementById('qr-close');
-    const qrIosImg = document.getElementById('qr-ios');
-    const qrAndroidImg = document.getElementById('qr-android');
+    const qrCodeImg = document.getElementById('qr-code');
 
-    const SUPABASE_URL = 'https://pknidxbkalbstzfquvsv.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrbmlkeGJrYWxic3R6ZnF1dnN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3Mjk0MjAsImV4cCI6MjA2OTMwNTQyMH0.Tz8XJMd7FG4UAPc4Twy3ndeTAWiulyRL95zaxS8sPOA';
-
+    // Models array with only static URLs except for Bed where we'll fetch signed URL dynamically
     const models = [
       {
         name: "Bed",
         image: "https://raw.githubusercontent.com/soumbhat/somemodels/main/bed.png",
-        glb: "bed.glb",
-        usdz: "https://huggingface.co/datasets/soumbhat/Demo_furniture/resolve/main/bed.usdz"
+        glbPublic: "https://raw.githubusercontent.com/soumbhat/somemodels/main/bed.glb", // fallback if supabase signed URL fails
+        usdz: "https://huggingface.co/datasets/soumbhat/Demo_furniture/resolve/main/bed.usdz",
+        qr_ios: "https://github.com/soumbhat/somemodels/blob/main/qrcode_bed_ios.png?raw=true",
+        qr_android: "https://github.com/soumbhat/somemodels/blob/main/qrcode_bed_android.png?raw=true",
+        bucketFile: "ar-models-furniture/bed.glb"  // path inside your bucket
       },
       {
         name: "Sofa",
@@ -43,78 +217,107 @@
     ];
 
     let currentIndex = 0;
+    let bedSignedUrl = null;
+
+    // Fetch signed URL for bed.glb from Supabase Storage
+    async function fetchBedSignedUrl() {
+      try {
+        const { data, error } = await supabase.storage
+          .from('ar-models-furniture')
+          .createSignedUrl('bed.glb', 60 * 60); // 1 hour expiry
+
+        if (error) {
+          console.error("Error fetching signed URL:", error);
+          return null;
+        }
+        return data.signedUrl;
+      } catch (e) {
+        console.error("Exception fetching signed URL:", e);
+        return null;
+      }
+    }
+
+    // Build Google AR Viewer URL with the glb file URL
+    function makeArViewerUrl(glbUrl) {
+      const encoded = encodeURIComponent(glbUrl);
+      return `https://arvr.google.com/scene-viewer/1.0?file=${encoded}&mode=ar_preferred`;
+    }
 
     function updateImage() {
       image.src = models[currentIndex].image;
     }
 
-    async function getSignedBedUrl() {
-      const res = await fetch(`${SUPABASE_URL}/storage/v1/object/sign/ar-models-furniture/bed.glb?expiresIn=3600`, {
-        method: 'POST',
-        headers: {
-          apikey: SUPABASE_ANON_KEY,
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      const { signedURL } = await res.json();
-      return `${SUPABASE_URL}${signedURL}`;
-    }
-
-    async function handleAR() {
+    async function updateQRCodes() {
       const model = models[currentIndex];
-      if (model.name === "Bed") {
-        const signedUrl = await getSignedBedUrl();
-        const encoded = encodeURIComponent(signedUrl);
 
-        if (isIOS) {
-          window.location.href = model.usdz;
-        } else if (!isMobile) {
-          const androidLink = `https://arvr.google.com/scene-viewer/1.0?file=${encoded}&mode=ar_preferred`;
-          qrIosImg.src = await new Promise(resolve => QRCode.toDataURL(androidLink, (_, url) => resolve(url)));
-          qrAndroidImg.src = qrIosImg.src;
-          qrWrapper.style.display = 'flex';
-        } else {
-          const intentUrl = `intent://arvr.google.com/scene-viewer/1.0?file=${encoded}&mode=ar_preferred#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;end;`;
-          window.location.href = intentUrl;
-        }
+      if (model.name === 'Bed') {
+        // For Bed, generate signed URL and then QR code for AR Viewer link wrapping signed URL
+        bedSignedUrl = await fetchBedSignedUrl();
+        const glbUrl = bedSignedUrl || model.glbPublic; // fallback to public if no signed URL
+        const arViewerLink = makeArViewerUrl(glbUrl);
+
+        // Generate QR code image as data URL and set it
+        QRCode.toDataURL(arViewerLink)
+          .then(url => {
+            qrCodeImg.src = url;
+          })
+          .catch(err => {
+            console.error('Failed to generate QR code:', err);
+            // fallback QR code to static image
+            qrCodeImg.src = model.qr_android;
+          });
       } else {
-        // Sofa uses static links
-        if (isIOS) {
-          window.location.href = model.usdz;
-        } else if (!isMobile) {
-          qrIosImg.src = model.qr_ios;
-          qrAndroidImg.src = model.qr_android;
-          qrWrapper.style.display = 'flex';
-        } else {
-          const encoded = encodeURIComponent(model.glb);
-          const intentUrl = `intent://arvr.google.com/scene-viewer/1.0?file=${encoded}&mode=ar_preferred#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;end;`;
-          window.location.href = intentUrl;
-        }
+        // For Sofa, just use static QR image for desktop
+        qrCodeImg.src = model.qr_android;
       }
     }
 
-    function updateQRCodes() {
-      const model = models[currentIndex];
-      if (model.qr_ios) qrIosImg.src = model.qr_ios;
-      if (model.qr_android) qrAndroidImg.src = model.qr_android;
-    }
-
-    nextBtn.addEventListener('click', () => {
+    nextBtn.addEventListener('click', async () => {
       currentIndex = (currentIndex + 1) % models.length;
       updateImage();
-      if (!isMobile) updateQRCodes();
+      if (!isMobile) await updateQRCodes();
     });
 
     qrClose.addEventListener('click', () => {
       qrWrapper.style.display = 'none';
     });
 
-    arButton.addEventListener('click', handleAR);
+    arButton.addEventListener('click', async () => {
+      const model = models[currentIndex];
 
-    updateImage();
-    if (!isMobile) updateQRCodes();
+      if (isIOS) {
+        // iOS: direct to USDZ
+        window.location.href = model.usdz;
+      } else if (!isMobile) {
+        // Desktop: show QR code modal with generated or static QR
+        await updateQRCodes();
+        qrWrapper.style.display = 'flex';
+      } else {
+        // Mobile Android or other mobile: open AR viewer link directly
+        let glbUrl;
+        if (model.name === 'Bed') {
+          glbUrl = bedSignedUrl || model.glbPublic;
+          if (!bedSignedUrl) {
+            // If not fetched yet, fetch now synchronously
+            bedSignedUrl = await fetchBedSignedUrl();
+            glbUrl = bedSignedUrl || model.glbPublic;
+          }
+        } else {
+          glbUrl = model.glb;
+        }
+
+        const intentUrl = `intent://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(glbUrl)}&mode=ar_preferred#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;S.browser_fallback_url=https%3A%2F%2Fmodelviewer.dev%2F;end;`;
+        window.location.href = intentUrl;
+      }
+    });
+
+    // Initialize on page load
+    (async () => {
+      updateImage();
+      if (!isMobile) await updateQRCodes();
+    })();
+
   </script>
+
 </body>
 </html>
