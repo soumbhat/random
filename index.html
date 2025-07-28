@@ -2,185 +2,88 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Furniture 3D Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Furniture 3D Viewer</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
-
     body {
+      font-family: sans-serif;
       margin: 0;
-      font-family: 'Montserrat', sans-serif;
-      background: #f5f7fa;
-      color: #333;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-      align-items: center;
-      justify-content: center;
-      padding: 2rem;
-      box-sizing: border-box;
+      padding: 0;
       text-align: center;
+      background: #f7f7f7;
     }
-    h1 { font-weight: 700; font-size: 2.5rem; margin-bottom: 0.2rem; color: #1a73e8; }
-    p.description { font-size: 1.1rem; margin: 0 0 2rem 0; max-width: 600px; color: #555; }
-
-    .image-wrapper {
-      position: relative;
-      max-width: 90vw;
-      margin-bottom: 2rem;
+    img {
+      max-width: 100%;
+      height: auto;
     }
-    .preview-image {
-      width: 90vw;
-      max-height: 350px;
+    #model-image {
+      max-width: 500px;
+      margin: 20px auto;
+      display: block;
+      border-radius: 16px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.2);
+    }
+    button {
+      padding: 10px 20px;
+      margin: 10px;
+      font-size: 16px;
+      border: none;
       border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(26, 115, 232, 0.2);
-      object-fit: contain;
-    }
-    .next-button {
-      position: absolute;
-      right: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-      background-color: #1a73e8;
-      border: none;
-      border-radius: 50%;
-      width: 45px;
-      height: 45px;
-      font-size: 1.5rem;
-      color: white;
       cursor: pointer;
-      box-shadow: 0 6px 12px rgba(26, 115, 232, 0.4);
-      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+      background-color: #333;
+      color: #fff;
     }
-    .next-button:hover {
-      background-color: #155ab6;
-      box-shadow: 0 8px 20px rgba(21, 90, 182, 0.6);
-    }
-    button#ar-button {
-      background-color: #1a73e8;
-      border: none;
-      border-radius: 8px;
-      padding: 1rem 2.5rem;
-      font-size: 1.25rem;
-      color: white;
-      cursor: pointer;
-      box-shadow: 0 6px 12px rgba(26, 115, 232, 0.4);
-      transition: background-color 0.3s ease, box-shadow 0.3s ease;
-    }
-    button#ar-button:hover {
-      background-color: #155ab6;
-      box-shadow: 0 8px 20px rgba(21, 90, 182, 0.6);
-    }
-
-    /* Modal overlay styles */
     #qr-wrapper {
       display: none;
       position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.5);
-      z-index: 1000;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
       justify-content: center;
       align-items: center;
-      animation: fadeIn 0.3s ease forwards;
+      z-index: 9999;
+      flex-direction: column;
+      gap: 20px;
     }
-
-    #qr-container {
-      background: #fff;
-      padding: 1.5rem 2rem;
-      border-radius: 12px;
-      max-width: 33vw;
-      min-width: 280px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.25);
-      position: relative;
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      gap: 1.5rem;
+    #qr-wrapper img {
+      width: 200px;
+      height: 200px;
     }
-
-    #qr-container p {
-      margin-bottom: 0.5rem;
-      font-weight: 600;
-      font-size: 1.1rem;
-      color: #222;
-    }
-
-    #qr-container img {
-      width: 140px;
-      height: 140px;
-      object-fit: contain;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-
     #qr-close {
       position: absolute;
-      top: 8px;
-      right: 8px;
-      background: transparent;
-      border: none;
-      font-size: 1.6rem;
+      top: 10px;
+      right: 20px;
+      font-size: 24px;
       cursor: pointer;
-      color: #888;
-      transition: color 0.2s ease;
-    }
-    #qr-close:hover {
-      color: #444;
-    }
-
-    @keyframes fadeIn {
-      from {opacity: 0;}
-      to {opacity: 1;}
-    }
-
-    @media (max-width: 480px) {
-      h1 { font-size: 2rem; }
-      .next-button { width: 38px; height: 38px; font-size: 1.2rem; }
-      button#ar-button { width: 100%; font-size: 1.1rem; padding: 1rem; }
-
-      #qr-container {
-        flex-direction: column;
-        width: 90vw;
-      }
-      #qr-container img {
-        width: 120px;
-        height: 120px;
-      }
+      color: white;
     }
   </style>
 </head>
 <body>
 
-  <h1>Furniture 3D Demo</h1>
-  <p class="description">
-    Explore realistic 3D models of our latest furniture designs. Tap the button below to switch models and view in augmented reality.
-  </p>
-
-  <div class="image-wrapper">
-    <img id="model-image" src="https://raw.githubusercontent.com/soumbhat/somemodels/main/bed.png" alt="Furniture Preview" class="preview-image" />
-    <button class="next-button" id="next-btn">&#9654;</button>
+  <h2>Demo: Furniture in Your Room</h2>
+  <img id="model-image" src="" alt="Furniture" />
+  <div>
+    <button id="next-btn">Next</button>
+    <button id="ar-button">View in AR</button>
   </div>
 
-  <button id="ar-button">View in AR</button>
-
-  <!-- QR Code modal popup -->
-  <div id="qr-wrapper" role="dialog" aria-modal="true" aria-labelledby="qr-title">
-    <div id="qr-container">
-      <button id="qr-close" aria-label="Close QR code popup">&times;</button>
-      <div style="text-align: center;">
-        <p id="qr-title">iPhone (iOS)</p>
-        <img id="qr-ios" alt="QR Code for iOS model download" />
-      </div>
-      <div style="text-align: center;">
-        <p>Android</p>
-        <img id="qr-android" alt="QR Code for Android model download" />
-      </div>
-    </div>
+  <div id="qr-wrapper">
+    <div id="qr-close">✖</div>
+    <img id="qr-ios" alt="QR iOS" />
+    <img id="qr-android" alt="QR Android" />
   </div>
 
-  <script>
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    const SUPABASE_URL = 'https://pknidxbkalbstzfquvsv.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrbmlkeGJrYWxic3R6ZnF1dnN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3Mjk0MjAsImV4cCI6MjA2OTMwNTQyMH0.Tz8XJMd7FG4UAPc4Twy3ndeTAWiulyRL95zaxS8sPOA';
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
     const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
     const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
     const arButton = document.getElementById('ar-button');
     const nextBtn = document.getElementById('next-btn');
     const image = document.getElementById('model-image');
@@ -193,18 +96,14 @@
       {
         name: "Bed",
         image: "https://raw.githubusercontent.com/soumbhat/somemodels/main/bed.png",
-        glb: "https://raw.githubusercontent.com/soumbhat/somemodels/main/bed.glb",
+        glb: "bed.glb", // Only filename — signed URL will be fetched
         usdz: "https://huggingface.co/datasets/soumbhat/Demo_furniture/resolve/main/bed.usdz",
-        qr_ios: "https://github.com/soumbhat/somemodels/blob/main/qrcode_bed_ios.png?raw=true",
-        qr_android: "https://github.com/soumbhat/somemodels/blob/main/qrcode_bed_android.png?raw=true"
       },
       {
         name: "Sofa",
         image: "https://raw.githubusercontent.com/soumbhat/somemodels/main/untitled-shoot-sofa.jpg",
         glb: "https://raw.githubusercontent.com/soumbhat/somemodels/main/texture_mesh_c59b717cae6ac53f_shaded.glb",
         usdz: "https://huggingface.co/datasets/soumbhat/Demo_furniture/resolve/main/texture_mesh_c59b717cae6ac53f_shaded%20(1).usdz",
-        qr_ios: "https://github.com/soumbhat/somemodels/blob/main/qrcode_sofa_ios.png?raw=true",
-        qr_android: "https://github.com/soumbhat/somemodels/blob/main/qrcode_sofa_android.png?raw=true"
       }
     ];
 
@@ -214,42 +113,67 @@
       image.src = models[currentIndex].image;
     }
 
-    function updateQRCodes() {
-      const model = models[currentIndex];
-      qrIosImg.src = model.qr_ios;
-      qrAndroidImg.src = model.qr_android;
+    async function generateSignedURL(fileName) {
+      const { data, error } = await supabase
+        .storage
+        .from('ar-models-furniture')
+        .createSignedUrl(fileName, 60); // valid for 60s
+      if (error) {
+        console.error("Signed URL error:", error.message);
+        return null;
+      }
+      return data.signedUrl;
+    }
+
+    async function updateQRWithSignedBedURL() {
+      const signedUrl = await generateSignedURL('bed.glb');
+      if (!signedUrl) return;
+      const qrApi = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(signedUrl)}`;
+      qrIosImg.src = qrApi;
+      qrAndroidImg.src = qrApi;
     }
 
     nextBtn.addEventListener('click', () => {
       currentIndex = (currentIndex + 1) % models.length;
       updateImage();
-      if (!isMobile) updateQRCodes();
     });
 
     qrClose.addEventListener('click', () => {
       qrWrapper.style.display = 'none';
     });
 
-    arButton.addEventListener('click', () => {
+    arButton.addEventListener('click', async () => {
       const model = models[currentIndex];
-      if (isIOS) {
-        // For iOS, redirect directly to USDZ
-        window.location.href = model.usdz;
-      } else if (!isMobile) {
-        // On desktop, show QR code modal popup with static images
-        updateQRCodes();
-        qrWrapper.style.display = 'flex';
+      if (model.name === "Bed") {
+        const signedUrl = await generateSignedURL('bed.glb');
+        if (!signedUrl) return;
+
+        if (isIOS) {
+          window.location.href = model.usdz;
+        } else if (!isMobile) {
+          await updateQRWithSignedBedURL();
+          qrWrapper.style.display = 'flex';
+        } else {
+          const intentUrl = `intent://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(signedUrl)}&mode=ar_preferred#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;S.browser_fallback_url=https%3A%2F%2Fmodelviewer.dev%2F;end;`;
+          window.location.href = intentUrl;
+        }
+
       } else {
-        // On Android mobile, use intent URL
-        const encoded = encodeURIComponent(model.glb);
-        const intentUrl = `intent://arvr.google.com/scene-viewer/1.0?file=${encoded}&mode=ar_preferred#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;S.browser_fallback_url=https%3A%2F%2Fmodelviewer.dev%2F;end;`;
-        window.location.href = intentUrl;
+        if (isIOS) {
+          window.location.href = model.usdz;
+        } else if (!isMobile) {
+          qrIosImg.src = "https://github.com/soumbhat/somemodels/blob/main/qrcode_sofa_ios.png?raw=true";
+          qrAndroidImg.src = "https://github.com/soumbhat/somemodels/blob/main/qrcode_sofa_android.png?raw=true";
+          qrWrapper.style.display = 'flex';
+        } else {
+          const intentUrl = `intent://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(model.glb)}&mode=ar_preferred#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;S.browser_fallback_url=https%3A%2F%2Fmodelviewer.dev%2F;end;`;
+          window.location.href = intentUrl;
+        }
       }
     });
 
-    // Initialize first image and QR codes for desktop view
+    // Initial load
     updateImage();
-    if (!isMobile) updateQRCodes();
   </script>
 
 </body>
